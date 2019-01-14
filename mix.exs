@@ -14,15 +14,16 @@ defmodule GameKun.MixProject do
 
   def escript do
     [
-      main_module: GameKun, emu_args: "-noinput -elixir ansi_enable true"
+      main_module: GameKun,
+      emu_args: "-noinput -elixir ansi_enable true"
     ]
   end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
-      #mod: {GameKun.Application, []}
+      extra_applications: [:logger]
+      # mod: {GameKun.Application, []}
     ]
   end
 
