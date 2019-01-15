@@ -2,7 +2,7 @@ defmodule GameKun.Cart do
   use GenServer
   alias __MODULE__
 
-  defstruct headers: %{cgb: 0, mbc: 0, rom_size: 0, ram_size: 0},
+  defstruct headers: %{cgb: nil, mbc: nil, rom_size: nil, ram_size: nil},
             rom: nil,
             ram: nil,
             rom_bank: 1,
@@ -26,6 +26,7 @@ defmodule GameKun.Cart do
 
   def init(rom_path) do
     rom = File.read!(rom_path)
+    # TODO: Read Save (Saved RAM)
     default = %Cart{}
 
     cart = %Cart{
@@ -36,7 +37,8 @@ defmodule GameKun.Cart do
           rom_size: :binary.part(rom, {0x148, 1}),
           ram_size: :binary.part(rom, {0x149, 1})
         },
-        rom: rom
+        rom: rom,
+        ram: 0x0000..0x1FFF |> Stream.zip(Stream.cycle([0x00])) |> Enum.into(%{})
     }
 
     {:ok, cart}
@@ -72,7 +74,7 @@ defmodule GameKun.Cart do
               raise("MBC1 needed")
 
             cart.headers.mbc == <<0x00>> ->
-              :binary.part(cart.rom_bank, {pos, len})
+              :binary.part(cart.ram_bank, {pos, len})
 
             true ->
               raise("Unimplemented Cart RAM at #{pos} with MBC #{cart.headers.mbc}")
