@@ -15,7 +15,8 @@ defmodule GameKun.CPU do
   end
 
   def handle_cast(:process, cpu_state) do
-    # HANDLE OPERATION
+    execute()
+
     case Process.info(Process.whereis(CPU), :message_queue_len) do
       {_, n} when n > 0 ->
         send(CPU, :interrupt)
@@ -34,5 +35,8 @@ defmodule GameKun.CPU do
   def handle_info(:begin, cpu_state) do
     GenServer.cast(CPU, :process)
     {:noreply, cpu_state}
+  end
+
+  def execute() do
   end
 end

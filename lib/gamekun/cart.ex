@@ -11,7 +11,7 @@ defmodule GameKun.Cart do
   # API
 
   def start_link(rom_path) do
-    GenServer.start_link(__MODULE__, rom_path, name: CART)
+    GenServer.start_link(__MODULE__, {rom_path, %Cart{}}, name: CART)
   end
 
   def read(pos, len) do
@@ -19,18 +19,18 @@ defmodule GameKun.Cart do
   end
 
   def write(pos, val) do
-    GenServer.call(CART, {:write, pos, val})
+    GenServer.cast(CART, {:write, pos, val})
+    raise "Unimplemented Behaviour"
   end
 
   # Server
 
-  def init(rom_path) do
+  def init({rom_path, init_state}) do
     rom = File.read!(rom_path)
     # TODO: Read Save (Saved RAM)
-    default = %Cart{}
 
     cart = %Cart{
-      default
+      init_state
       | headers: %{
           cgb: :binary.part(rom, {0x143, 1}),
           mbc: :binary.part(rom, {0x147, 1}),
@@ -38,7 +38,7 @@ defmodule GameKun.Cart do
           ram_size: :binary.part(rom, {0x149, 1})
         },
         rom: rom,
-        ram: 0x0000..0x1FFF |> Stream.zip(Stream.cycle([0x00])) |> Enum.into(%{})
+        ram: 0x0000..0x1FFF |> Stream.zip(Stream.cycle([<<0>>])) |> Enum.into(%{})
     }
 
     {:ok, cart}
@@ -64,31 +64,27 @@ defmodule GameKun.Cart do
           pos = pos - 0xA000
 
           cond do
+            cart.headers.mbc in [<<0x00>>, <<0x05>>, <<0x06>>] ->
+              cart.ram_bank[pos]
+
             cart.headers.mbc in [<<0x0F>>, <<0x11>>, <<0x13>>, <<0x13>>] ->
               raise("MBC3 Needed")
 
-            cart.headers.mbc in [<<0x05>>, <<0x06>>] ->
-              :binary.part(cart.ram_bank, {pos, len})
-
             cart.headers.mbc in [<<0x01>>, <<0x02>>, <<0x03>>] ->
-              raise("MBC1 needed")
-
-            cart.headers.mbc == <<0x00>> ->
-              :binary.part(cart.ram_bank, {pos, len})
+              raise("MBC1 Needed")
 
             true ->
               raise("Unimplemented Cart RAM at #{pos} with MBC #{cart.headers.mbc}")
           end
 
         true ->
-          raise("Unimplemented read at #{pos} of len #{len} with MBC #{cart.headers.mbc}")
+          raise("Unimplemented read at #{pos} with MBC #{cart.headers.mbc}")
       end
 
     {:reply, val, cart}
   end
 
-  def handle_call({:write, _pos, _val}, _from, _cart) do
-    raise("Unimplemented Cart Write")
-    {:reply, :ok}
+  def handle_cast({:write, _pos, _val}, _cart) do
+    {:noreply, :ok}
   end
 end

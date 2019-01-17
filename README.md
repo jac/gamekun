@@ -1,21 +1,15 @@
-# GameKun
+# __GameKun__
+### GameKun is a Game Boy emulator written in elixir.
 
-**TODO: Add description**
-
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `gamekun` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:gamekun, "~> 0.1.0"}
-  ]
-end
+To build the executable clone the project and run the follow command in the root of the project directory.
+```
+mix escript.build
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/gamekun](https://hexdocs.pm/gamekun).
+This will generate an executable file. To run the emulator simply use the following command where `<path_to_rom>` is a path to a `.gb` or ~~`.gbc`~~ rom.
+```
+./gamekun <path_to_rom>
+```
+**Currently only Game Boy games are supported but Game Boy Color support is planned**
 
+The test rom `cpu_instrs.gb` comes from [Blargg's Test Roms](http://gbdev.gg8.se/files/roms/blargg-gb-tests/)
