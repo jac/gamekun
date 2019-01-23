@@ -1,6 +1,8 @@
 # __GameKun__
 ### GameKun is a Game Boy emulator written in elixir.
 
+**This is a POC project which I gave myself as a challenge while learning Elixir**
+
 To build the executable clone the project and run the follow command in the root of the project directory.
 ```
 mix escript.build

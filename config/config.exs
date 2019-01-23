@@ -3,7 +3,7 @@
 use Mix.Config
 
 config :gamekun,
-  init: %{
+  hram: %{
     0xFF10 => <<0x80>>,
     0xFF11 => <<0xBF>>,
     0xFF12 => <<0xF3>>,
@@ -23,7 +23,36 @@ config :gamekun,
     0xFF47 => <<0xFC>>,
     0xFF48 => <<0xFF>>,
     0xFF49 => <<0xFF>>,
-    0xFF70 => <<0x01>>,
+    # CGB Only, will this effect non cgb games?
+    0xFF70 => <<0x01>>
+  },
+  gb_reg: %{
+    0 => <<0x00>>,
+    1 => <<0x13>>,
+    2 => <<0x00>>,
+    3 => <<0xD8>>,
+    4 => <<0x01>>,
+    5 => <<0x4D>>,
+    6 => <<0xB0>>,
+    7 => <<0x01>>,
+    :sp => 0xFFFE,
+    :pc => 0x0100,
+    :ime => 0,
+    :cycles => 0
+  },
+  cgb_reg: %{
+    0 => <<0x00>>,
+    1 => <<0x13>>,
+    2 => <<0x00>>,
+    3 => <<0xD8>>,
+    4 => <<0x01>>,
+    5 => <<0x4D>>,
+    6 => <<0xB0>>,
+    7 => <<0x01>>,
+    :sp => 0xFFFE,
+    :pc => 0x0100,
+    :ime => 0,
+    :cycles => 0
   }
 
 # This configuration is loaded before any dependency and is restricted

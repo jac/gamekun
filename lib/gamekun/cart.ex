@@ -67,7 +67,7 @@ defmodule GameKun.Cart do
             cart.headers.mbc in [<<0x00>>, <<0x05>>, <<0x06>>] ->
               cart.ram_bank[pos]
 
-            cart.headers.mbc in [<<0x0F>>, <<0x11>>, <<0x13>>, <<0x13>>] ->
+            cart.headers.mbc in [<<0x0F>>, <<0x11>>, <<0x12>>, <<0x13>>] ->
               raise("MBC3 Needed")
 
             cart.headers.mbc in [<<0x01>>, <<0x02>>, <<0x03>>] ->

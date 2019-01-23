@@ -41,7 +41,7 @@ defmodule GameKun.RAM do
 
   defp init_hram() do
     range = gen_range_map(0xFF00..0xFFFF)
-    init = Application.fetch_env!(:gamekun, :init)
+    init = Application.fetch_env!(:gamekun, :hram)
     Map.merge(range, init)
   end
 
@@ -74,13 +74,16 @@ defmodule GameKun.RAM do
 
         pos == 0xFF70 ->
           adjusted =
-          case value do
-            <<0>> ->
-              <<0x01>>
-            <<n>> ->
-              <<n>>
-          end
+            case value do
+              <<0>> ->
+                <<0x01>>
+
+              n ->
+                n
+            end
+
           %{memory | :hram => %{memory.hram | pos => adjusted}}
+
         pos in 0xFF00..0xFFFF ->
           %{memory | :hram => %{memory.hram | pos => value}}
       end
