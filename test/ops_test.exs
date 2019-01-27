@@ -1,4 +1,4 @@
-defmodule GameKunOpcodesTest do
+defmodule GameKunOpsTest do
   use ExUnit.Case
   doctest GameKun.Ops
   alias GameKun.Ops
@@ -167,4 +167,6 @@ defmodule GameKunOpcodesTest do
   test "0xC3 - jmp a16" do
     assert Ops.decode(<<0xC3>>, %{@default | pc: 0x101}) == %{@default | cycles: 16, pc: 0x0637}
   end
+
+
 end

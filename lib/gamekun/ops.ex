@@ -1,42 +1,51 @@
 defmodule GameKun.Ops do
   use Bitwise
+  alias GameKun.Ops.Extended
+  alias GameKun.MMU
 
-  def decode(op, cpu_state) do
+  def decode(<<op>>, cpu_state) do
     cpu_state = %{cpu_state | pc: cpu_state.pc + 1, cycles: cpu_state.cycles + 4}
-
-    op
-    |> :binary.decode_unsigned()
-    |> execute(cpu_state)
+    execute(op, cpu_state)
   end
 
   # Flags
-  defp z_f(<<0>>), do: 128
-  defp z_f(_n), do: 0
+  def z_f(<<0>>), do: 128
+  def z_f(_n), do: 0
 
-  defp c_f_8(n, arg1, arg2, carry \\ 0)
-  defp c_f_8(0, arg1, arg2, carry) do
+  def c_f_8(n, arg1, arg2, carry \\ 0)
+
+  def c_f_8(0, arg1, arg2, carry) do
     if arg1 + arg2 + carry > 255, do: 16, else: 0
   end
 
-  defp c_f_8(1, arg1, arg2, carry) do
+  def c_f_8(1, arg1, arg2, carry) do
     if arg1 - arg2 - carry < 0, do: 16, else: 0
   end
 
-  defp h_f_8(n, arg1, arg2, carry \\ 0)
-  defp h_f_8(0, arg1, arg2, carry) do
-    if (((arg1 &&& 0xF) + (arg2 &&& 0xF) + carry) &&& 0x10) == 0x10, do: 32, else: 0
+  def h_f_8(n, arg1, arg2, carry \\ 0)
+
+  def h_f_8(0, arg1, arg2, carry) do
+    if ((arg1 &&& 0xF) + (arg2 &&& 0xF) + carry &&& 0x10) == 0x10, do: 32, else: 0
   end
 
-  defp h_f_8(1, arg1, arg2, carry) do
-    if (((arg1 &&& 0xF) - (arg2 &&& 0xF) + carry) &&& 0x10) == 0x10, do: 32, else: 0
+  def h_f_8(1, arg1, arg2, carry) do
+    if ((arg1 &&& 0xF) - (arg2 &&& 0xF) + carry &&& 0x10) == 0x10, do: 32, else: 0
   end
 
   # Extract destination and source registers from opcode
-  defp arit_vals(op, state) do
+  def arit_vals(op, state) do
     src = Bitwise.band(op, 7)
     <<s_val>> = state[src]
     <<dest>> = state[7]
     {dest, s_val}
+  end
+
+  # Get address and val of 16 bit register pointer
+  def val_16({reg1, reg2}, cpu_state) do
+    address = (cpu_state[reg1] <> cpu_state[reg2])
+      |> :binary.decode_unsigned()
+    val = MMU.read(address)
+    {val, address}
   end
 
   ## Operations
@@ -70,7 +79,7 @@ defmodule GameKun.Ops do
   # adc reg, reg
   def execute(op, state) when op in 0x88..0x8D or op == 0x8F do
     {dest, s_val} = arit_vals(op, state)
-    carry = if (:binary.decode_unsigned(state[6]) &&& 16) == 16, do: 1, else: 0
+    carry = (:binary.decode_unsigned(state[6]) >>> 4) &&& 1
     result = dest + s_val + carry
     z = z_f(<<result>>)
     h = h_f_8(0, dest, s_val, carry)
@@ -91,7 +100,7 @@ defmodule GameKun.Ops do
   # sbc reg, reg
   def execute(op, state) when op in 0x98..0x9D or op == 0x9F do
     {dest, s_val} = arit_vals(op, state)
-    carry = if (:binary.decode_unsigned(state[6]) &&& 16) == 16, do: 1, else: 0
+    carry = (:binary.decode_unsigned(state[6]) >>> 4) &&& 1
     result = dest - s_val - carry
     z = z_f(<<result>>)
     h = h_f_8(1, dest, s_val, carry)
@@ -136,10 +145,16 @@ defmodule GameKun.Ops do
   # jmp a16
   def execute(0xC3, state) do
     pc =
-      GameKun.MMU.read(state.pc, 2)
+      MMU.read(state.pc, 2)
       |> :binary.decode_unsigned(:little)
 
     %{state | pc: pc, cycles: state.cycles + 12}
+  end
+
+  # PREFIX CB
+  def execute(0xCB, state) do
+    MMU.read(state.pc)
+    |> Extended.decode(state)
   end
 
   def execute(op, _cpu_state) do
