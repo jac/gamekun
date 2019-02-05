@@ -1,131 +1,195 @@
 defmodule GameKun.Ops.Extended do
-
   use Bitwise
-  alias GameKun.Ops
+  alias GameKun.MMU
+  alias GameKun.Ops.Extended.Impl
 
   def decode(<<op>>, cpu_state) do
     cpu_state = %{cpu_state | pc: cpu_state.pc + 1, cycles: cpu_state.cycles + 4}
     execute(op, cpu_state)
   end
 
-  defp reg_from_op(op), do: op &&& 7
-  defp bit_pos(op), do: op >>> 3 &&& 7
-  defp reg_val(op,state) do
+  defp reg_from_op(op) do
+    op &&& 7
+  end
+
+  def reg_val(op, state) do
     reg = reg_from_op(op)
     <<val>> = state[reg]
     {reg, val}
   end
 
-  defp bit_pos(val, pos) do
-    <<(val >>> pos) &&& 1>>
+  # Get address and val of memory location pointed to by HL
+  def pos_val_hl(cpu_state) do
+    <<address::16>> = cpu_state[4] <> cpu_state[5]
+    <<val>> = MMU.read(address)
+    {address, val}
   end
 
 
+  # rlc (hl)
+  def execute(0x06, state) do
+    {pos, val} = pos_val_hl(state)
+    {rlc, flags} = Impl.rlc(val)
+    MMU.write(pos, rlc)
+    %{state | 6 => flags, cycles: state.cycles + 8}
+  end
   # rlc reg
-  def execute(op, state) when op in 0x00..0x06 or op == 0x07 do
+  def execute(op, state) when op <= 0x07 do
     {reg, val} = reg_val(op, state)
-    rlc = <<(val <<< 1) ||| (val >>> 7)>>
-    z = Ops.z_f(rlc)
-    c = val >>> 3 &&& 0x10
-    %{state | reg => rlc, 6 => <<z ||| c>>}
+    {rlc, flags} = Impl.rlc(val)
+    %{state | reg => rlc, 6 => flags}
+  end
+
+  # rrc (hl)
+  def execute(0x0E, state) do
+    {pos, val} = pos_val_hl(state)
+    {rrc, flags} = Impl.rrc(val)
+    MMU.write(pos, rrc)
+    %{state | 6 => flags, cycles: state.cycles + 8}
   end
 
   # rrc reg
-  def execute(op, state) when op in 0x08..0x0D or op == 0x0F do
+  def execute(op, state) when op <= 0x0F do
     {reg, val} = reg_val(op, state)
-    rrc = <<(val >>> 1) ||| (val <<< 7)>>
-    z = Ops.z_f(rrc)
-    c = val <<< 4 &&& 0x10
-    %{state | reg => rrc, 6 => <<z ||| c>>}
+    {rrc, flags} = Impl.rrc(val)
+    %{state | reg => rrc, 6 => flags}
+  end
+
+  # rl (hl)
+  def execute(0x16, state) do
+    {pos, val} = pos_val_hl(state)
+    carry = :binary.decode_unsigned(state[6]) >>> 4 &&& 1
+    {rl, flags} = Impl.rl(val, carry)
+    MMU.write(pos, rl)
+    %{state | 6 => flags, cycles: state.cycles + 8}
   end
 
   # rl reg
-  def execute(op, state) when op in 0x10..0x16 or op == 0x17 do
+  def execute(op, state) when op <= 0x17 do
     {reg, val} = reg_val(op, state)
-    carry = (:binary.decode_unsigned(state[6]) >>> 4) &&& 1
-    rl = <<(val <<< 1) ||| carry>>
-    z = Ops.z_f(rl)
-    c = val >>> 3 &&& 0x10
-    %{state | reg => rl, 6 => <<z ||| c>>}
+    carry = :binary.decode_unsigned(state[6]) >>> 4 &&& 1
+    {rl, flags} = Impl.rl(val, carry)
+    %{state | reg => rl, 6 => flags}
+  end
+
+  # rr (hl)
+  def execute(0x1E, state) do
+    {pos, val} = pos_val_hl(state)
+    carry = :binary.decode_unsigned(state[6]) <<< 3 &&& 0x80
+    {rr, flags} = Impl.rr(val, carry)
+    MMU.write(pos, rr)
+    %{state | 6 => flags, cycles: state.cycles + 8}
   end
 
   # rr reg
-  def execute(op, state) when op in 0x18..0x1D or op == 0x1F do
+  def execute(op, state) when op <= 0x1F do
     {reg, val} = reg_val(op, state)
-    carry = (:binary.decode_unsigned(state[6]) <<< 3) &&& 0x80
-    rr = <<(val >>> 1) ||| carry>>
-    z = Ops.z_f(rr)
-    c = val <<< 4 &&& 0x10
-    %{state | reg => rr, 6 => <<z ||| c>>}
+    carry = :binary.decode_unsigned(state[6]) <<< 3 &&& 0x80
+    {rr, flags} = Impl.rr(val, carry)
+    %{state | reg => rr, 6 => flags}
   end
 
-  #sla reg
-  def execute(op, state) when op in 0x20..0x25 or op == 0x27 do
-    {reg, val} = reg_val(op, state)
-    sla = <<val <<< 1>>
-    z = Ops.z_f(sla)
-    c = val >>> 3 &&& 0x10
-    %{state | reg => sla, 6 => <<z ||| c>>}
+  # sla (hl)
+  def execute(0x26, state) do
+    {pos, val} = pos_val_hl(state)
+    {sla, flags} = Impl.sla(val)
+    MMU.write(pos, sla)
+    %{state | 6 => flags, cycles: state.cycles + 8}
   end
 
-  #sra reg
-  def execute(op, state) when op in 0x28..0x2D or op == 0x2F do
+  # sla reg
+  def execute(op, state) when op <= 0x27 do
     {reg, val} = reg_val(op, state)
-    sra = <<val >>> 1 ||| val &&& 0x80>>
-    z = Ops.z_f(sra)
-    c = val <<< 4 &&& 0x10
-    %{state | reg => sra, 6 => <<z ||| c>>}
+    {sla, flags} = Impl.sla(val)
+    %{state | reg => sla, 6 => flags}
   end
 
-  #swap reg
-  def execute(op, state) when op in 0x30..0x35 or op == 0x37 do
-    {reg, val} = reg_val(op, state)
-    swapped = <<val <<< 4 ||| val >>> 4>>
-    z = Ops.z_f(swapped)
-    %{state | reg => swapped, 6 => <<z>>}
+  # sra (hl)
+  def execute(0x2E, state) do
+    {pos, val} = pos_val_hl(state)
+    {sra, flags} = Impl.sra(val)
+    MMU.write(pos, sra)
+    %{state | 6 => flags, cycles: state.cycles + 8}
   end
 
-  #srl reg
-  def execute(op, state) when op in 0x38..0x3D or op == 0x3F do
+  # sra reg
+  def execute(op, state) when op <= 0x2F do
     {reg, val} = reg_val(op, state)
-    sra = <<val >>> 1>>
-    z = Ops.z_f(sra)
-    c = val <<< 4 &&& 0x10
-    %{state | reg => sra, 6 => <<z ||| c>>}
+    {sra, flags} = Impl.sra(val)
+    %{state | reg => sra, 6 => flags}
   end
 
-  # bit pos, reg
-  def execute(op, state) when op in 0x40..0x7F and rem(op, 0x10) not in [6,14] do
+  # swap (hl)
+  def execute(0x36, state) do
+    {pos, val} = pos_val_hl(state)
+    {swapped, flags} = Impl.swap(val)
+    MMU.write(pos, swapped)
+    %{state | 6 => flags, cycles: state.cycles + 8}
+  end
+
+  # swap reg
+  def execute(op, state) when op <= 0x37 do
+    {reg, val} = reg_val(op, state)
+    {swapped, flags} = Impl.swap(val)
+    %{state | reg => swapped, 6 => flags}
+  end
+
+  # srl (hl)
+  def execute(0x3E, state) do
+    {pos, val} = pos_val_hl(state)
+    {srl, flags} = Impl.srl(val)
+    MMU.write(pos, srl)
+    %{state | 6 => flags, cycles: state.cycles + 8}
+  end
+
+  # srl reg
+  def execute(op, state) when op <= 0x3F do
+    {reg, val} = reg_val(op, state)
+    {srl, flags} = Impl.srl(val)
+    %{state | reg => srl, 6 => flags}
+  end
+
+  # bit n, (hl)
+  def execute(op, state) when op <= 0x7F and (op &&& 0x07) == 6 do
+    {_pos, val} = pos_val_hl(state)
+    flags = Impl.bit(op, val, state)
+    %{state | 6 => flags, cycles: state.cycles + 8}
+  end
+
+  # bit n, reg
+  def execute(op, state) when op <= 0x7F do
     {_reg, val} = reg_val(op, state)
-    pos = bit_pos(op)
-    z = Ops.z_f(bit_pos(val, pos))
-    carry = :binary.decode_unsigned(state[6]) &&& 0x10
-    %{state | 6 => <<z ||| 32 ||| carry>>}
+    flags = Impl.bit(op, val, state)
+    %{state | 6 => flags}
+  end
+
+  # res n, (hl)
+  def execute(op, state) when op <= 0xBF and (op &&& 0x07) == 6 do
+    {pos, val} = pos_val_hl(state)
+    res = Impl.set(op, val, 0)
+    MMU.write(pos, res)
+    %{state | cycles: state.cycles + 8}
   end
 
   # res pos, reg
-  def execute(op, state) when op in 0x80..0xBF and rem(op, 0x10) not in [6,14] do
+  def execute(op, state) when op <= 0xBF do
     {reg, val} = reg_val(op, state)
-    pos = bit_pos(op)
-    above = 7 - pos
-    below = pos
-    <<a::size(above), _b::1, c::size(below)>> = <<val>>
-    set = <<a::size(above), 0::1, c::size(below)>>
-    %{state | reg => set}
+    res = Impl.set(op, val, 0)
+    %{state | reg => res}
   end
 
-  #set pos, reg
-  def execute(op, state) when op in 0xC0..0xFF and rem(op, 0x10) not in [6,14] do
-    {reg, val} = reg_val(op, state)
-    pos = bit_pos(op)
-    above = 7 - pos
-    below = pos
-    <<a::size(above), _b::1, c::size(below)>> = <<val>>
-    set = <<a::size(above), 1::1, c::size(below)>>
-    %{state | reg => set}
+  # set n, (hl)
+  def execute(op, state) when op <= 0xFF and (op &&& 0x07) == 6 do
+    {pos, val} = pos_val_hl(state)
+    set = Impl.set(op, val, 1)
+    MMU.write(pos, set)
+    %{state | cycles: state.cycles + 8}
   end
 
-  def execute(op, _state) do
-    raise("Unimplemented Operation #{Integer.to_string(op, 16)}")
+  # set pos, reg
+  def execute(op, state) when op <= 0xFF do
+    {reg, val} = reg_val(op, state)
+    set = Impl.set(op, val, 1)
+    %{state | reg => set}
   end
 end
