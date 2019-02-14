@@ -24,3 +24,4 @@ gamekun-*.tar
 
 .elixir_ls
 /gamekun
+/cover
