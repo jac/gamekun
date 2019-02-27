@@ -25,7 +25,6 @@ defmodule GameKun.Ops.Extended do
     {address, val}
   end
 
-
   # rlc (hl)
   def execute(0x06, state) do
     {pos, val} = pos_val_hl(state)
@@ -33,6 +32,7 @@ defmodule GameKun.Ops.Extended do
     MMU.write(pos, rlc)
     %{state | 6 => flags, cycles: state.cycles + 8}
   end
+
   # rlc reg
   def execute(op, state) when op <= 0x07 do
     {reg, val} = reg_val(op, state)

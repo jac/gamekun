@@ -7,7 +7,7 @@ defmodule GameKun.RAM do
 
   # API
   def start_link(_args) do
-    GenServer.start_link(__MODULE__, %RAM_S{}, name: RAM)
+    GenServer.start_link(__MODULE__, nil, name: RAM)
   end
 
   def read(pos) do
@@ -19,18 +19,17 @@ defmodule GameKun.RAM do
   end
 
   # Server
-  def init(init_state) do
+  def init(_init_state) do
     # 8 Banks of 4k starting from 0xc000
     wram = gen_range_map(0xC000..0x016000)
     hram = init_hram()
 
-    updated_state = %RAM_S{
-      init_state
-      | wram: wram,
-        hram: hram
+    state = %RAM_S{
+      wram: wram,
+      hram: hram
     }
 
-    {:ok, updated_state}
+    {:ok, state}
   end
 
   defp gen_range_map(range) do

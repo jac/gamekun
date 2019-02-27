@@ -11,8 +11,6 @@ defmodule GameKunTest do
 
   test "File Not Found" do
     assert capture_io(fn -> GameKun.main([""]) end) == "File Not Found\n"
-
-    assert capture_io(fn -> GameKun.main(["~/unlikely_to_be_a_real_path.gb"]) end) ==
-             "File Not Found\n"
+    assert capture_io(fn -> GameKun.main(["~/unlikely_to_be_a_real_path.gb"]) end) == "File Not Found\n"
   end
 end
