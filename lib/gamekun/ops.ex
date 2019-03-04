@@ -448,15 +448,15 @@ defmodule GameKun.Ops do
 
   # ld hl, sp + r8
   def execute(0xF8, state) do
-    {[h,l], cycles, flags} = Impl.hl_sp(state)
+    {[h, l], cycles, flags} = Impl.hl_sp(state)
     %{state | 4 => h, 5 => l, 6 => flags, cycles: cycles}
   end
+
   # ld sp, hl
   def execute(0xF9, state) do
     sp = Impl.hl(state)
     %{state | sp: sp, cycles: state.cycles + 4}
   end
-
 
   # ld a, (a16)
   def execute(0xFA, state) do

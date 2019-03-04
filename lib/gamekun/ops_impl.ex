@@ -441,13 +441,14 @@ defmodule GameKun.Ops.Impl do
 
   def hl_sp(state) do
     {result, flags, _pc, cycles} = add_sp_r8(state)
-    <<h,l>> = <<result::16>>
-    {[<<h>>,<<l>>], cycles - 4, flags}
+    <<h, l>> = <<result::16>>
+    {[<<h>>, <<l>>], cycles - 4, flags}
   end
 
   def halt() do
     Process.whereis(CPU)
     |> send(:halt)
+
     :ok
   end
 end

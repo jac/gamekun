@@ -51,5 +51,4 @@ defmodule GameKun.CPU do
     GenServer.cast(CPU, :process)
     {:noreply, state}
   end
-
 end
