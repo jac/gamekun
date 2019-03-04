@@ -28,15 +28,7 @@ defmodule GameKun.Flags do
     (arg1 + arg2) >>> 12 &&& 0x10
   end
 
-  def c_f_16(1, arg1, arg2) do
-    c_f_8(1, arg1 &&& 0xFF, arg2)
-  end
-
   def h_f_16(0, arg1, arg2) do
     ((arg1 &&& 0x0FFF) + (arg2 &&& 0x0FFF)) >>> 7 &&& 0x20
-  end
-
-  def h_f_16(1, arg1, arg2) do
-    h_f_8(1, arg1, arg2)
   end
 end

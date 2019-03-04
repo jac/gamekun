@@ -66,8 +66,6 @@ defmodule GameKunFlagsTest do
     assert Flags.c_f_16(0, 0xFFFF, 1) == 0x10
     assert Flags.c_f_16(0, 0xFFFF, 0xFFFF) == 0x10
     assert Flags.c_f_16(0, 0x014F, 0xFFFE) == 0x10
-    # Subtraction
-    #assert Flags.c_f_16(1, 0x0020,)
   end
 
   test "H-16" do
@@ -78,9 +76,5 @@ defmodule GameKunFlagsTest do
     assert Flags.h_f_16(0, 0xFFFF, 0xFFFF) == 0x20
     assert Flags.h_f_16(0, 0x0FFF, 0) == 0
     assert Flags.h_f_16(0, 0x0FFF, 1) == 0x20
-    # Subtraction (Acts on lower byte of arg1)
-    # assert Flags.h_f_16(1, 0, 0) == 0
-    # assert Flags.h_f_16(1, 0x0020, 21) == 0
-    #assert Flags.h_f_16(1, 0xFF)
   end
 end
