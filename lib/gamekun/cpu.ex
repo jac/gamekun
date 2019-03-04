@@ -23,37 +23,33 @@ defmodule GameKun.CPU do
     {:ok, cpu_state}
   end
 
+  def handle_info(:begin, state) do
+    GenServer.cast(CPU, :process)
+    {:noreply, state}
+  end
+
+  def handle_info(:interrupt, state = %{ime: 0}) do
+    state
+  end
+
+  def handle_info(:interrupt, state) do
+    raise "Interrupts needed"
+    GenServer.cast(CPU, :process)
+    {:noreply, state}
+  end
+
+  def handle_info(:halt, state) do
+    state
+  end
+
   def handle_cast(:process, cpu_state) do
-    cpu_state =
+    state =
       cpu_state.pc
       |> GameKun.MMU.read()
       |> GameKun.Ops.decode(cpu_state)
 
-    enabled = interrupts_enabled?(cpu_state)
-
-    case Process.info(Process.whereis(CPU), :message_queue_len) do
-      {_, n} when enabled and n > 0 ->
-        nil
-
-      _ ->
-        GenServer.cast(CPU, :process)
-    end
-
-    {:noreply, cpu_state}
-  end
-
-  defp interrupts_enabled?(cpu_state) do
-    cpu_state.ime == 1
-  end
-
-  def handle_info(:interrupt, cpu_state) do
-    raise "Interrupts needed"
     GenServer.cast(CPU, :process)
-    {:noreply, cpu_state}
+    {:noreply, state}
   end
 
-  def handle_info(:begin, cpu_state) do
-    GenServer.cast(CPU, :process)
-    {:noreply, cpu_state}
-  end
 end
