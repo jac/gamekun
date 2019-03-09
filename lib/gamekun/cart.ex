@@ -20,7 +20,6 @@ defmodule GameKun.Cart do
 
   def write(pos, val) do
     GenServer.cast(CART, {:write, pos, val})
-    raise "Unimplemented Behaviour"
   end
 
   # Server
@@ -84,7 +83,7 @@ defmodule GameKun.Cart do
     {:reply, val, cart}
   end
 
-  def handle_cast({:write, _pos, _val}, _cart) do
-    {:noreply, :ok}
+  def handle_cast({:write, _pos, _val}, cart) do
+    {:noreply, cart}
   end
 end
