@@ -9,7 +9,8 @@ defmodule GameKun.Application do
       {GameKun.Cart, rom_path},
       GameKun.RAM,
       GameKun.GPU,
-      GameKun.CPU
+      GameKun.CPU,
+      GameKun.Timer
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
