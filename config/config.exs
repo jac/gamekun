@@ -38,6 +38,7 @@ config :gamekun,
     :sp => 0xFFFE,
     :pc => 0x0100,
     :ime => 0,
+    :ime_cycle_accuracy => false,
     :cycles => 0
   },
   cgb_reg: %{
@@ -52,6 +53,7 @@ config :gamekun,
     :sp => 0xFFFE,
     :pc => 0x0100,
     :ime => 0,
+    :ime_cycle_accuracy => false,
     :cycles => 0
   }
 
