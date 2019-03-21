@@ -57,7 +57,6 @@ defmodule GameKun.CPU do
       |> GameKun.Ops.decode(cpu_state)
 
     cycle_diff = state.cycles - cpu_state.cycles
-    IO.puts(Integer.to_string(state.pc, 16))
     GameKun.GPU.step(cycle_diff)
     {_, mailbox_length} = Process.info(self(), :message_queue_len)
     if mailbox_length == 0, do: GenServer.cast(self(), :process)
