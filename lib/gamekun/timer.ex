@@ -23,8 +23,8 @@ defmodule GameKun.Timer do
   def init(_) do
     state =
       0xFF05..0xFF07
-      |> Stream.zip(Stream.cycle(<<0x00>>))
-      |> Stream.into(%{0xFF04 => <<0x00::16>>})
+      |> Stream.zip(Stream.cycle([<<0x00>>]))
+      |> Enum.into(%{0xFF04 => <<0x00::16>>})
 
     {:ok, state}
   end
@@ -50,6 +50,12 @@ defmodule GameKun.Timer do
 
   # TIMA Counter/Modulo
   def handle_cast({:write, pos, val}, state) do
-    {:noreply, %{state | pos => <<val>>}}
+    {:noreply, %{state | pos => val}}
+  end
+
+  def handle_cast({:step, _amt}, _from, state) do
+    # <<div::16>> = state[0xFF04]
+
+    {:reply, nil, state}
   end
 end
