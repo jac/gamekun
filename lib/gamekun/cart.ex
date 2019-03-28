@@ -1,12 +1,14 @@
 defmodule GameKun.Cart do
   use GenServer
+  use Bitwise
   alias __MODULE__
 
   defstruct headers: %{cgb: nil, mbc: nil, rom_size: nil, ram_size: nil},
             rom: nil,
             ram: nil,
             rom_bank: 1,
-            ram_bank: 0
+            ram_bank: 0,
+            mode: 0
 
   # API
 
@@ -83,7 +85,16 @@ defmodule GameKun.Cart do
     {:reply, val, cart}
   end
 
-  def handle_cast({:write, _pos, _val}, cart) do
+  def handle_cast({:write, pos, val}, cart) do
+    cart = bank(pos, val, cart)
     {:noreply, cart}
   end
+
+  def bank(pos, <<val>>, cart) when pos in 0x2000..0x3FFF do
+    bank = val &&& 32
+    bank = if bank == 0, do: 1, else: bank
+    %{cart | rom_bank: bank}
+  end
+
+  def bank(_, _, _), do: raise("Not Supported")
 end
