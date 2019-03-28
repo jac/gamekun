@@ -10,8 +10,8 @@ defmodule GameKun.RAM do
     GenServer.start_link(__MODULE__, nil, name: RAM)
   end
 
-  def read(pos) do
-    GenServer.call(RAM, {:read, pos})
+  def read(pos, len \\ 1) do
+    GenServer.call(RAM, {:read, pos, len})
   end
 
   def write(pos, value) do
@@ -44,21 +44,31 @@ defmodule GameKun.RAM do
     Map.merge(range, init)
   end
 
-  def handle_call({:read, pos}, _from, memory) do
+  def handle_call({:read, pos, len}, _from, memory) do
     value =
       cond do
         pos in 0xC000..0xCFFF ->
-          memory.wram[pos]
+          read(memory.wram, pos, len)
 
         pos in 0xD000..0xDFFF ->
           actual = get_bank(memory) * 0x1000 + pos
-          memory.wram[actual]
+          read(memory.wram, actual, len)
 
         pos in 0xFF00..0xFFFF ->
-          memory.hram[pos]
+          read(memory.hram, pos, len)
       end
 
     {:reply, value, memory}
+  end
+
+  def read(ram, pos, 1) do
+    ram[pos]
+  end
+
+  def read(ram, pos, len) do
+    Map.take(ram, pos..(pos+len-1))
+      |> Enum.to_list()
+      |> Enum.into(<<>>, fn {_, val} -> val end)
   end
 
   def handle_cast({:write, pos, value}, memory) do
