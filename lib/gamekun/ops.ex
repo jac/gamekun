@@ -23,8 +23,8 @@ defmodule GameKun.Ops do
   end
 
   # stop
-  def execute(0x10, _state) do
-    exit({:shutdown, 0})
+  def execute(0x10, state) do
+    %{state | halt: -1}
   end
 
   # jr r8
@@ -158,8 +158,7 @@ defmodule GameKun.Ops do
 
   # halt
   def execute(0x76, state) do
-    Impl.halt()
-    state
+    %{state | halt: -1}
   end
 
   # ld (hl), reg

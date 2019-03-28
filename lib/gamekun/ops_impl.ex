@@ -13,15 +13,6 @@ defmodule GameKun.Ops.Impl do
     val
   end
 
-  # Adjust nibble to bcd compliancy
-  defp bcd_adjust(val, flag \\ 0) do
-    if (val &&& 0x0F) > 9 or flag == 1 do
-      {val + 0x06 &&& 0x0F, 1}
-    else
-      {val, 0}
-    end
-  end
-
   # Extract Register from Opcode
   defp reg_16(op) do
     reg1 = (op ^^^ 0xC1) >>> 3
@@ -312,17 +303,24 @@ defmodule GameKun.Ops.Impl do
     <<z ||| 0x40 ||| h ||| c>>
   end
 
+  def daa(0, a, flags) do
+    {a, c} = if (((flags &&& 0x10) == 0x10) or ((a &&& 0xF0) > 0x90)), do: {a + 0x60, 0x10}, else: {a, 0}
+    a = if (((flags &&& 0x20) == 0x20) or ((a &&& 0x0F) > 0x09)), do: a + 0x06, else: a
+    {<<a>>, c}
+  end
+
+  def daa(0x40, a, flags) do
+    a = if ((flags &&& 0x10) == 0x10), do: a - 0x60, else: a
+    a = if ((a &&& 0x0F) > 0x09), do: a - 0x06, else: a
+    {<<a>>, 0}
+  end
+
   def daa(state) do
     <<flags, a>> = state[6] <> state[7]
     n = flags &&& 0x40
-    h = flags >>> 4 &&& 1
-    {lNibble, halfCarry} = bcd_adjust(a, h)
-    high = (a >>> 4) + halfCarry
-    {hNibble, carry} = bcd_adjust(high)
-    daa = <<hNibble <<< 4 ||| lNibble>>
-    z = Flags.z_f(daa)
-    c = carry <<< 4
-    {daa, <<z ||| n ||| c>>}
+    {a, c} = daa(n, a, flags)
+    z = Flags.z_f(a)
+    {a, <<z ||| n ||| c>>}
   end
 
   def rlc_rrc(op, state) do
@@ -443,12 +441,5 @@ defmodule GameKun.Ops.Impl do
     {result, flags, _pc, cycles} = add_sp_r8(state)
     <<h, l>> = <<result::16>>
     {[<<h>>, <<l>>], cycles - 4, flags}
-  end
-
-  def halt() do
-    Process.whereis(CPU)
-    |> send(:halt)
-
-    :ok
   end
 end
