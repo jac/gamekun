@@ -4,6 +4,7 @@ use Mix.Config
 
 config :gamekun,
   hram: %{
+    0xFF00 => <<0x0F>>,
     0xFF10 => <<0x80>>,
     0xFF11 => <<0xBF>>,
     0xFF12 => <<0xF3>>,
@@ -38,8 +39,8 @@ config :gamekun,
     :sp => 0xFFFE,
     :pc => 0x0100,
     :ime => 0,
-    :ime_cycle_accuracy => false,
-    :cycles => 0
+    :cycles => 0,
+    :halt => 0
   },
   cgb_reg: %{
     0 => <<0x00>>,
@@ -53,8 +54,8 @@ config :gamekun,
     :sp => 0xFFFE,
     :pc => 0x0100,
     :ime => 0,
-    :ime_cycle_accuracy => false,
-    :cycles => 0
+    :cycles => 0,
+    :halt => 0
   }
 
 # This configuration is loaded before any dependency and is restricted
